@@ -16,6 +16,11 @@ const Map<String, AppMeta> appMeta = {
     Color(0xFF34D399),
   ),
   'de-xuat': AppMeta(Icons.send_outlined, Color(0xFFF43F5E), Color(0xFFF472B6)),
+  'phe-duyet': AppMeta(
+    Icons.fact_check_outlined,
+    Color(0xFF7C3AED),
+    Color(0xFFC084FC),
+  ),
   'tuyen-dung': AppMeta(Icons.person_add, Color(0xFFDB2777), Color(0xFFFB7185)),
   'hanh-chinh': AppMeta(Icons.approval, Color(0xFF881337), Color(0xFFB91C1C)),
   'cham-cong': AppMeta(Icons.access_time, Color(0xFF0891B2), Color(0xFF38BDF8)),

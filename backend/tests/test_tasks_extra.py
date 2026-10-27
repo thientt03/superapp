@@ -10,7 +10,7 @@ def test_migrate_idempotent():
         db.migrate(conn)
         db.migrate(conn)
         v = [r["version"] for r in conn.execute("SELECT version FROM schema_migrations ORDER BY 1")]
-    assert v == ["001_init.sql", "002_seed.sql"]
+    assert v == ["001_init.sql", "002_seed.sql", "003_approvals.sql", "004_approvals_seed.sql"]
 
 
 def test_assignee_mixed_patch_forbidden_and_unchanged():

@@ -42,7 +42,7 @@ def test_dashboard_fields_and_apps():
     assert d["attendance"] == {"shift_start": "08:30", "checked_in_at": None}
     assert d["notifications"] == {"unread_count": 3}
     assert [a["id"] for a in d["pinned_apps"]] == [
-        "cong-viec", "de-xuat", "tuyen-dung", "hanh-chinh", "cham-cong",
+        "cong-viec", "de-xuat", "phe-duyet", "tuyen-dung", "hanh-chinh", "cham-cong",
         "ho-so", "tinh-luong", "bao-cao", "kho", "cai-dat",
     ]
 

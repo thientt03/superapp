@@ -11,6 +11,7 @@ import 'package:superapp/dashboard_screen.dart';
 const _ids = {
   'cong-viec': 'Công việc',
   'de-xuat': 'Đề xuất',
+  'phe-duyet': 'Phê duyệt',
   'tuyen-dung': 'Tuyển dụng',
   'hanh-chinh': 'Hành chính',
   'cham-cong': 'Chấm công',
@@ -42,7 +43,11 @@ Map<String, dynamic> _task(int id, {bool canEdit = false}) => {
   'updated_at': '2026-10-27T08:00:00+07:00',
 };
 
-Map<String, dynamic> _dash({bool events = true, bool myTask = false}) => {
+Map<String, dynamic> _dash({
+  bool events = true,
+  bool myTask = false,
+  int pending = 0,
+}) => {
   'user': {'id': 'u1', 'full_name': 'Nguyễn Văn A', 'avatar_url': null},
   'attendance': {'shift_start': '08:30', 'checked_in_at': null},
   'events_today': events
@@ -61,6 +66,7 @@ Map<String, dynamic> _dash({bool events = true, bool myTask = false}) => {
   ],
   'notifications': {'unread_count': 3},
   'my_task': myTask ? _task(7) : null,
+  'pending_approval_count': pending,
 };
 
 Future<ApiClient> _pump(
@@ -87,7 +93,7 @@ Future<ApiClient> _pump(
 void main() {
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
 
-  testWidgets('render tên và 11 ô', (t) async {
+  testWidgets('render tên và 12 ô', (t) async {
     await _pump(t, (_) async => _json(_dash()));
     expect(find.text('Nguyễn Văn A'), findsOneWidget);
     expect(
@@ -95,9 +101,47 @@ void main() {
         of: find.byType(GridView),
         matching: find.byType(GestureDetector),
       ),
-      findsNWidgets(11),
+      findsNWidgets(12),
     );
     expect(find.text('Thêm mới'), findsOneWidget);
+  });
+
+  testWidgets('badge Phê duyệt hiện số khi count = 3', (t) async {
+    await _pump(t, (_) async => _json(_dash(pending: 3)));
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('approval-badge')),
+        matching: find.text('3'),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('count = 0 không có badge', (t) async {
+    await _pump(t, (_) async => _json(_dash()));
+    expect(find.byKey(const Key('approval-badge')), findsNothing);
+  });
+
+  testWidgets('bấm Phê duyệt gọi GET /api/approvals', (t) async {
+    final paths = <String>[];
+    await _pump(t, (r) async {
+      paths.add(r.url.path);
+      return r.url.path == '/api/approvals'
+          ? _json({'items': [], 'next_cursor': null})
+          : _json(_dash());
+    });
+    await t.tap(find.text('Phê duyệt'));
+    await t.pump();
+    await t.pump();
+    expect(paths, contains('/api/approvals'));
+    expect(find.text('Chưa có yêu cầu'), findsOneWidget);
+  });
+
+  testWidgets('bấm Cài đặt mở màn có Cấu hình phê duyệt', (t) async {
+    await _pump(t, (_) async => _json(_dash()));
+    await t.tap(find.text('Cài đặt'));
+    await t.pumpAndSettle();
+    expect(find.text('Cấu hình phê duyệt'), findsOneWidget);
   });
 
   testWidgets('bấm Chấm vào chuyển thành Đã chấm vào', (t) async {

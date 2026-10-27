@@ -41,7 +41,7 @@ void showToast(BuildContext context, String msg) {
 void toastError(BuildContext context, Object e) {
   if (e is ApiException) {
     if (e.status == 401) return;
-    if (e.status == 403 || e.status == 422) {
+    if (e.status == 403 || e.status == 409 || e.status == 422) {
       return showToast(
         context,
         e.detail.isEmpty ? 'Dữ liệu không hợp lệ' : e.detail,

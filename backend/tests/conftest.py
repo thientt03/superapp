@@ -14,3 +14,4 @@ def clean_tasks():
 
     with db.pool().connection() as conn:
         conn.execute("TRUNCATE tasks RESTART IDENTITY")
+        conn.execute("TRUNCATE approval_requests, approval_flow_steps RESTART IDENTITY CASCADE")

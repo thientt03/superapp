@@ -5,8 +5,10 @@ import 'package:flutter/material.dart';
 import 'ai_chat_sheet.dart';
 import 'api.dart';
 import 'app_meta.dart';
+import 'approvals_screen.dart';
 import 'greeting.dart';
 import 'models.dart';
+import 'settings_screen.dart';
 import 'task_detail_screen.dart';
 import 'tasks_screen.dart';
 import 'toast.dart';
@@ -99,6 +101,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           pinnedApps: _data!.pinnedApps,
           unreadCount: _data!.unreadCount,
           myTask: _data!.myTask,
+          pendingApprovalCount: _data!.pendingApprovalCount,
         );
       });
       _toast('Chấm công thành công lúc ${a.checkedInAt}');
@@ -701,30 +704,62 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _appTile(PinnedApp a) {
     final m = appMeta[a.id] ?? fallbackMeta;
-    return _tile(
-      Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.bottomLeft,
-            end: Alignment.topRight,
-            colors: [m.from, m.to],
-          ),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 4,
-              offset: Offset(0, 2),
-            ),
-          ],
+    final badge = a.id == 'phe-duyet' ? (_data?.pendingApprovalCount ?? 0) : 0;
+    final icon = Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.bottomLeft,
+          end: Alignment.topRight,
+          colors: [m.from, m.to],
         ),
-        child: Icon(m.icon, color: Colors.white, size: 24),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
+        ],
       ),
+      child: Icon(m.icon, color: Colors.white, size: 24),
+    );
+    return _tile(
+      badge == 0
+          ? icon
+          : Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned.fill(child: icon),
+                Positioned(
+                  top: -6,
+                  right: -6,
+                  child: Container(
+                    key: const Key('approval-badge'),
+                    padding: const EdgeInsets.symmetric(horizontal: 5),
+                    constraints: const BoxConstraints(minWidth: 18),
+                    height: 18,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE11D48),
+                      borderRadius: BorderRadius.circular(9),
+                      border: Border.all(color: Colors.white, width: 1.5),
+                    ),
+                    child: Text(
+                      '$badge',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
       a.name,
       _slate700,
-      () => a.id == 'cong-viec'
-          ? _openTasks()
-          : _toast('Mở ứng dụng: ${a.name}'),
+      () => switch (a.id) {
+        'cong-viec' => _openTasks(),
+        'phe-duyet' => _push(ApprovalsScreen(api: widget.api)),
+        'cai-dat' => _push(SettingsScreen(api: widget.api)),
+        _ => _toast('Mở ứng dụng: ${a.name}'),
+      },
     );
   }
 

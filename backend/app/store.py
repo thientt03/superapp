@@ -20,6 +20,7 @@ APPS = [
     for i, n in [
         ("cong-viec", "Công việc"),
         ("de-xuat", "Đề xuất"),
+        ("phe-duyet", "Phê duyệt"),
         ("tuyen-dung", "Tuyển dụng"),
         ("hanh-chinh", "Hành chính"),
         ("cham-cong", "Chấm công"),

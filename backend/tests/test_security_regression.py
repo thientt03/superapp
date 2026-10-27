@@ -192,3 +192,23 @@ def test_bm08_proxy_headers_would_spoof_ip(clock):
 def test_bm08_dockerfile_cmd_has_no_proxy_headers():
     cmd = [l for l in (ROOT / "backend/Dockerfile").read_text().splitlines() if l.startswith("CMD")]
     assert len(cmd) == 1 and "--no-proxy-headers" in cmd[0]
+
+
+def test_bm01_lone_surrogate_body_is_422_not_500():
+    t = anon.post("/api/auth/login", json={"username": "demo", "password": "demo123"}).json()["access_token"]
+    h = {"Authorization": "Bearer " + t, "Content-Type": "application/json"}
+    for url, raw in (
+        ("/api/approvals", b'{"doc_type":"khac","title":"\\ud800"}'),
+        ("/api/auth/login", b'{"username":"\\ud800","password":"x"}'),
+    ):
+        r = anon.post(url, content=raw, headers=h)
+        assert r.status_code == 422 and isinstance(r.json()["detail"], list), url
+
+
+def test_bm03_deeply_nested_body_is_422_not_500():
+    t = anon.post("/api/auth/login", json={"username": "demo", "password": "demo123"}).json()["access_token"]
+    h = {"Authorization": "Bearer " + t, "Content-Type": "application/json"}
+    raw = b"[" * 5000 + b"]" * 5000
+    for url in ("/api/approvals", "/api/auth/login"):
+        r = anon.post(url, content=raw, headers=h)
+        assert r.status_code == 422 and isinstance(r.json()["detail"], list), url

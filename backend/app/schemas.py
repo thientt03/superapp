@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StringConstraints, model_validator
 
 
 class User(BaseModel):
@@ -43,6 +43,16 @@ Priority = Literal["low", "medium", "high"]
 Title = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200, pattern=r"^[^\x00]*$")]
 Description = Annotated[str, StringConstraints(strip_whitespace=True, max_length=5000, pattern=r"^[^\x00]*$")]
 AssigneeId = Annotated[str, StringConstraints(max_length=64, pattern=r"^[^\x00]*$")]
+
+
+DocTypeCode = Annotated[str, StringConstraints(max_length=64, pattern=r"^[^\x00]*$")]
+RefNo = Annotated[str, StringConstraints(strip_whitespace=True, max_length=50, pattern=r"^[^\x00]*$")]
+Comment = Annotated[str, StringConstraints(strip_whitespace=True, max_length=1000, pattern=r"^[^\x00]*$")]
+RejectReason = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=1000, pattern=r"^[^\x00]*$")
+]
+Amount = Annotated[StrictInt, Field(gt=0, le=999_999_999_999)]
+ApprovalStatus = Literal["pending", "approved", "rejected", "cancelled"]
 
 
 class Task(BaseModel):
@@ -91,6 +101,83 @@ class TaskUpdate(BaseModel):
         return self
 
 
+class FlowStep(BaseModel):
+    level: int
+    approver: Employee
+
+
+class ApprovalType(BaseModel):
+    code: str
+    name: str
+    has_amount: bool
+    has_date_range: bool
+    steps: list[FlowStep]
+
+
+class ApprovalTypeList(BaseModel):
+    can_edit: bool
+    items: list[ApprovalType]
+
+
+class FlowUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    approver_ids: list[AssigneeId] = Field(max_length=5)
+
+
+class ApprovalStep(BaseModel):
+    level: int
+    approver: Employee
+    decision: Literal["approved", "rejected"] | None
+    comment: str | None
+    decided_at: str | None
+
+
+class ApprovalRequest(BaseModel):
+    id: int
+    doc_type: str
+    doc_type_name: str
+    title: str
+    description: str | None
+    ref_no: str | None
+    amount: int | None
+    start_date: str | None
+    end_date: str | None
+    status: ApprovalStatus
+    current_level: int | None
+    requester: Employee
+    steps: list[ApprovalStep]
+    can_approve: bool
+    can_cancel: bool
+    created_at: str
+    updated_at: str
+
+
+class ApprovalPage(BaseModel):
+    items: list[ApprovalRequest]
+    next_cursor: str | None
+
+
+class ApprovalCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    doc_type: DocTypeCode
+    title: Title
+    description: Description | None = None
+    ref_no: RefNo | None = None
+    amount: Amount | None = None
+    start_date: date | None = None
+    end_date: date | None = None
+
+
+class ApprovalApprove(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    comment: Comment | None = None
+
+
+class ApprovalReject(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    comment: RejectReason
+
+
 class Dashboard(BaseModel):
     user: User
     attendance: Attendance
@@ -98,6 +185,7 @@ class Dashboard(BaseModel):
     pinned_apps: list[PinnedApp]
     notifications: Notifications
     my_task: Task | None = None
+    pending_approval_count: int = 0
 
 
 class LoginRequest(BaseModel):
