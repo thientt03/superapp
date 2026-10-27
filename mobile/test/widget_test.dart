@@ -1,0 +1,171 @@
+import 'dart:convert';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:superapp/api.dart';
+import 'package:superapp/dashboard_screen.dart';
+
+const _ids = {
+  'cong-viec': 'Công việc',
+  'de-xuat': 'Đề xuất',
+  'tuyen-dung': 'Tuyển dụng',
+  'hanh-chinh': 'Hành chính',
+  'cham-cong': 'Chấm công',
+  'ho-so': 'Hồ sơ',
+  'tinh-luong': 'Tính lương & phúc lợi',
+  'bao-cao': 'Báo cáo',
+  'kho': 'Kho',
+  'cai-dat': 'Cài đặt',
+};
+
+http.Response _json(Object body, [int status = 200]) => http.Response.bytes(
+  utf8.encode(jsonEncode(body)),
+  status,
+  headers: {'content-type': 'application/json; charset=utf-8'},
+);
+
+Map<String, dynamic> _dash({bool events = true}) => {
+  'user': {'id': 'u1', 'full_name': 'Nguyễn Văn A', 'avatar_url': null},
+  'attendance': {'shift_start': '08:30', 'checked_in_at': null},
+  'events_today': events
+      ? [
+          {
+            'id': 'e2',
+            'title': 'Họp giao ban tuần',
+            'start_time': '15:30',
+            'end_time': '16:30',
+            'location': 'Phòng A1',
+          },
+        ]
+      : [],
+  'pinned_apps': [
+    for (final e in _ids.entries) {'id': e.key, 'name': e.value},
+  ],
+  'notifications': {'unread_count': 3},
+};
+
+Future<ApiClient> _pump(
+  WidgetTester t,
+  MockClientHandler h, {
+  VoidCallback? onLogout,
+  VoidCallback? onUnauthorized,
+}) async {
+  await t.binding.setSurfaceSize(const Size(400, 900));
+  addTearDown(() => t.binding.setSurfaceSize(null));
+  final api = ApiClient(client: MockClient(h), baseUrl: 'http://x')
+    ..token = 't'
+    ..onUnauthorized = onUnauthorized;
+  await t.pumpWidget(
+    MaterialApp(
+      home: DashboardScreen(api: api, onLogout: onLogout ?? () {}),
+    ),
+  );
+  await t.pump();
+  await t.pump();
+  return api;
+}
+
+void main() {
+  setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
+
+  testWidgets('render tên và 11 ô', (t) async {
+    await _pump(t, (_) async => _json(_dash()));
+    expect(find.text('Nguyễn Văn A'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(GridView),
+        matching: find.byType(GestureDetector),
+      ),
+      findsNWidgets(11),
+    );
+    expect(find.text('Thêm mới'), findsOneWidget);
+  });
+
+  testWidgets('bấm Chấm vào chuyển thành Đã chấm vào', (t) async {
+    await _pump(
+      t,
+      (r) async => r.method == 'POST'
+          ? _json({'shift_start': '08:30', 'checked_in_at': '14:47'})
+          : _json(_dash()),
+    );
+    await t.tap(find.text('Chấm vào'));
+    await t.pump();
+    await t.pump();
+    expect(find.text('Đã chấm vào'), findsOneWidget);
+    expect(find.text('Chấm công thành công lúc 14:47'), findsOneWidget);
+    await t.pump(const Duration(seconds: 3));
+  });
+
+  testWidgets('409 hiện SnackBar detail', (t) async {
+    await _pump(
+      t,
+      (r) async => r.method == 'POST'
+          ? _json({'detail': 'Bạn đã chấm vào hôm nay'}, 409)
+          : _json(_dash()),
+    );
+    await t.tap(find.text('Chấm vào'));
+    await t.pump();
+    await t.pump();
+    expect(find.text('Bạn đã chấm vào hôm nay'), findsOneWidget);
+    await t.pump(const Duration(seconds: 3));
+  });
+
+  testWidgets('events rỗng', (t) async {
+    await _pump(t, (_) async => _json(_dash(events: false)));
+    expect(find.text('Không có sự kiện'), findsOneWidget);
+    expect(find.text('Chi tiết'), findsNothing);
+  });
+
+  testWidgets('GET lỗi hiện Thử lại', (t) async {
+    await _pump(t, (_) async => _json({'detail': 'x'}, 500));
+    expect(find.text('Không tải được dữ liệu'), findsOneWidget);
+    expect(find.text('Thử lại'), findsOneWidget);
+  });
+
+  testWidgets('gửi header Bearer', (t) async {
+    String? auth;
+    await _pump(t, (r) async {
+      auth = r.headers['Authorization'];
+      return _json(_dash());
+    });
+    expect(auth, 'Bearer t');
+  });
+
+  testWidgets('GET 401 xoá token, gọi onUnauthorized, không hiện Thử lại', (
+    t,
+  ) async {
+    var called = 0;
+    final api = await _pump(
+      t,
+      (_) async => _json({'detail': 'x'}, 401),
+      onUnauthorized: () => called++,
+    );
+    expect(api.token, isNull);
+    expect(called, 1);
+    expect(find.text('Thử lại'), findsNothing);
+  });
+
+  for (final fail in [false, true]) {
+    testWidgets('Đăng xuất (logout lỗi: $fail)', (t) async {
+      var posted = false;
+      var out = 0;
+      final api = await _pump(t, (r) async {
+        if (r.url.path == '/api/auth/logout') {
+          posted = true;
+          if (fail) throw Exception('net');
+          return http.Response('', 204);
+        }
+        return _json(_dash());
+      }, onLogout: () => out++);
+      await t.tap(find.bySemanticsLabel('Đăng xuất'));
+      await t.pump();
+      await t.pump();
+      expect(posted, isTrue);
+      expect(api.token, isNull);
+      expect(out, 1);
+    });
+  }
+}
