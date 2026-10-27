@@ -1,10 +1,29 @@
 services:
+  postgres:
+    image: postgres:17.11-alpine
+    environment:
+      POSTGRES_USER: superapp
+      POSTGRES_DB: superapp
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Cần POSTGRES_PASSWORD trong .env}
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U superapp -d superapp"]
+      interval: 5s
+      retries: 10
   backend:
     build: ./backend
     ports:
       - "127.0.0.1:8000:8000"
     environment:
       CORS_ORIGINS: http://localhost:5173
+      DATABASE_URL: postgresql://superapp:${POSTGRES_PASSWORD}@postgres:5432/superapp
+    depends_on:
+      postgres:
+        condition: service_healthy
   frontend:
     build:
       context: ./frontend
@@ -14,3 +33,5 @@ services:
       - "127.0.0.1:5173:80"
     depends_on:
       - backend
+volumes:
+  pgdata:

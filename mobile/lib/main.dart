@@ -39,6 +39,7 @@ class _AuthGateState extends State<AuthGate> {
     super.initState();
     _api.onUnauthorized = () {
       if (mounted) {
+        Navigator.of(context).popUntil((r) => r.isFirst);
         setState(
           () => _notice = 'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại',
         );

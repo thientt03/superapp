@@ -27,7 +27,22 @@ http.Response _json(Object body, [int status = 200]) => http.Response.bytes(
   headers: {'content-type': 'application/json; charset=utf-8'},
 );
 
-Map<String, dynamic> _dash({bool events = true}) => {
+Map<String, dynamic> _task(int id, {bool canEdit = false}) => {
+  'id': id,
+  'title': 'Việc $id',
+  'description': null,
+  'status': 'todo',
+  'priority': 'medium',
+  'due_date': '2026-10-30',
+  'is_overdue': false,
+  'can_edit': canEdit,
+  'assigner': {'id': 'u2', 'full_name': 'Trần Thị B', 'avatar_url': null},
+  'assignee': {'id': 'u1', 'full_name': 'Nguyễn Văn A', 'avatar_url': null},
+  'created_at': '2026-10-27T08:00:00+07:00',
+  'updated_at': '2026-10-27T08:00:00+07:00',
+};
+
+Map<String, dynamic> _dash({bool events = true, bool myTask = false}) => {
   'user': {'id': 'u1', 'full_name': 'Nguyễn Văn A', 'avatar_url': null},
   'attendance': {'shift_start': '08:30', 'checked_in_at': null},
   'events_today': events
@@ -45,6 +60,7 @@ Map<String, dynamic> _dash({bool events = true}) => {
     for (final e in _ids.entries) {'id': e.key, 'name': e.value},
   ],
   'notifications': {'unread_count': 3},
+  'my_task': myTask ? _task(7) : null,
 };
 
 Future<ApiClient> _pump(
@@ -113,10 +129,28 @@ void main() {
     await t.pump(const Duration(seconds: 3));
   });
 
-  testWidgets('events rỗng', (t) async {
-    await _pump(t, (_) async => _json(_dash(events: false)));
-    expect(find.text('Không có sự kiện'), findsOneWidget);
+  testWidgets('my_task null', (t) async {
+    await _pump(t, (_) async => _json(_dash()));
+    expect(find.text('Không có công việc'), findsOneWidget);
     expect(find.text('Chi tiết'), findsNothing);
+  });
+
+  testWidgets('my_task có giá trị, bấm Chi tiết gọi GET /api/tasks/7', (
+    t,
+  ) async {
+    final paths = <String>[];
+    await _pump(t, (r) async {
+      paths.add(r.url.path);
+      return r.url.path == '/api/tasks/7'
+          ? _json(_task(7))
+          : _json(_dash(myTask: true));
+    });
+    expect(find.text('Việc 7'), findsOneWidget);
+    expect(find.text('Hạn 30/10/2026'), findsOneWidget);
+    await t.tap(find.text('Chi tiết'));
+    await t.pump();
+    await t.pump();
+    expect(paths, contains('/api/tasks/7'));
   });
 
   testWidgets('GET lỗi hiện Thử lại', (t) async {

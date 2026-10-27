@@ -30,7 +30,7 @@ class ApiClient {
   String? token;
   void Function()? onUnauthorized;
 
-  Future<Map<String, dynamic>?> _send(
+  Future<dynamic> _send(
     Future<http.Response> Function(Map<String, String> headers) call, {
     bool notify = true,
   }) async {
@@ -52,19 +52,21 @@ class ApiClient {
       final d = body is Map ? body['detail'] : null;
       throw ApiException(res.statusCode, d is String ? d : '');
     }
-    return body is Map<String, dynamic> ? body : null;
+    return body;
   }
 
   Uri _u(String path) => Uri.parse('$baseUrl$path');
 
   Future<Dashboard> fetchDashboard() async => Dashboard.fromJson(
-    (await _send((h) => _client.get(_u('/api/dashboard'), headers: h)))!,
+    (await _send((h) => _client.get(_u('/api/dashboard'), headers: h)))
+        as Map<String, dynamic>,
   );
 
   Future<Attendance> checkIn() async => Attendance.fromJson(
     (await _send(
-      (h) => _client.post(_u('/api/attendance/check-in'), headers: h),
-    ))!,
+          (h) => _client.post(_u('/api/attendance/check-in'), headers: h),
+        ))
+        as Map<String, dynamic>,
   );
 
   Future<void> login(String username, String password) async {
@@ -75,8 +77,65 @@ class ApiClient {
         body: jsonEncode({'username': username, 'password': password}),
       ),
     );
-    token = b!['access_token'] as String;
+    token = (b as Map<String, dynamic>)['access_token'] as String;
   }
+
+  Future<List<Employee>> fetchEmployees() async =>
+      ((await _send((h) => _client.get(_u('/api/employees'), headers: h)))
+              as List)
+          .map((e) => Employee.fromJson(e as Map<String, dynamic>))
+          .toList();
+
+  Future<TaskPage> fetchTasks({
+    String scope = 'assigned_to_me',
+    String? status,
+    String? cursor,
+    int limit = 20,
+  }) async {
+    final uri = _u('/api/tasks').replace(
+      queryParameters: {
+        'scope': scope,
+        'status': ?status,
+        'cursor': ?cursor,
+        'limit': '$limit',
+      },
+    );
+    return TaskPage.fromJson(
+      (await _send((h) => _client.get(uri, headers: h)))
+          as Map<String, dynamic>,
+    );
+  }
+
+  Future<Task> fetchTask(int id) async => Task.fromJson(
+    (await _send((h) => _client.get(_u('/api/tasks/$id'), headers: h)))
+        as Map<String, dynamic>,
+  );
+
+  Future<Task> createTask(Map<String, dynamic> body) async => Task.fromJson(
+    (await _send(
+          (h) => _client.post(
+            _u('/api/tasks'),
+            headers: {...h, 'Content-Type': 'application/json'},
+            body: jsonEncode(body),
+          ),
+        ))
+        as Map<String, dynamic>,
+  );
+
+  Future<Task> updateTask(int id, Map<String, dynamic> body) async =>
+      Task.fromJson(
+        (await _send(
+              (h) => _client.patch(
+                _u('/api/tasks/$id'),
+                headers: {...h, 'Content-Type': 'application/json'},
+                body: jsonEncode(body),
+              ),
+            ))
+            as Map<String, dynamic>,
+      );
+
+  Future<void> deleteTask(int id) =>
+      _send((h) => _client.delete(_u('/api/tasks/$id'), headers: h));
 
   Future<void> logout() async {
     try {

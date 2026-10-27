@@ -47,7 +47,8 @@ def test_bm02_nginx_security_headers():
 
 def test_bm03_ports_bound_to_loopback():
     ports = re.findall(r'-\s*"([^"]+:\d+)"', (ROOT / "docker-compose.yml").read_text())
-    assert len(ports) == 2 and all(p.startswith("127.0.0.1:") for p in ports)
+    assert len(ports) == 3 and all(p.startswith("127.0.0.1:") for p in ports)
+    assert re.search(r"image:\s*postgres:\d+\.\d+", (ROOT / "docker-compose.yml").read_text())
 
 
 def test_bm04_pinned_deps_and_dev_split():

@@ -7,6 +7,9 @@ import 'api.dart';
 import 'app_meta.dart';
 import 'greeting.dart';
 import 'models.dart';
+import 'task_detail_screen.dart';
+import 'tasks_screen.dart';
+import 'toast.dart';
 
 const _primary = Color(0xFFBE094E);
 const _slate800 = Color(0xFF1E293B);
@@ -77,40 +80,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  void _toast(String msg) {
-    final m = ScaffoldMessenger.of(context);
-    m.hideCurrentSnackBar();
-    m.showSnackBar(
-      SnackBar(
-        content: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.check_circle, color: Color(0xFF4ADE80), size: 16),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                msg,
-                style: const TextStyle(color: Colors.white, fontSize: 12),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: _slate800,
-        behavior: SnackBarBehavior.floating,
-        shape: const StadiumBorder(),
-        duration: const Duration(milliseconds: 2500),
-        // đẩy toast lên phía trên màn hình
-        margin: EdgeInsets.only(
-          bottom:
-              MediaQuery.of(context).size.height -
-              MediaQuery.of(context).padding.top -
-              90,
-          left: 40,
-          right: 40,
-        ),
-      ),
-    );
-  }
+  void _toast(String msg) => showToast(context, msg);
 
   Future<void> _checkIn() async {
     if (_checkingIn || _data == null || _data!.attendance.checkedInAt != null) {
@@ -128,6 +98,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           eventsToday: _data!.eventsToday,
           pinnedApps: _data!.pinnedApps,
           unreadCount: _data!.unreadCount,
+          myTask: _data!.myTask,
         );
       });
       _toast('Chấm công thành công lúc ${a.checkedInAt}');
@@ -459,7 +430,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               children: [
                 Expanded(child: _attendanceCard(d.attendance)),
                 const SizedBox(width: 12),
-                Expanded(child: _eventCard(d.eventsToday)),
+                Expanded(child: _taskCard(d.myTask)),
               ],
             ),
           ),
@@ -620,24 +591,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _eventCard(List<Event> events) {
-    final e = events.isEmpty ? null : events.first;
-    final sub = e == null
-        ? ''
-        : (e.location == null ? e.startTime : '${e.startTime} - ${e.location}');
+  Future<void> _push(Widget screen) async {
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+    if (mounted) _load(silent: true);
+  }
+
+  void _openTasks() => _push(TasksScreen(api: widget.api));
+
+  Widget _taskCard(Task? t) {
     return _card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _cardTitle(
-            Icons.event_available,
-            const Color(0xFFFFF1F2),
-            const Color(0xFFE11D48),
-            'Sự kiện hôm nay',
+            Icons.check_box_outlined,
+            const Color(0xFFF0FDFA),
+            const Color(0xFF0D9488),
+            'Công việc của tôi',
           ),
           const SizedBox(height: 12),
           Text(
-            e?.title ?? 'Không có sự kiện',
+            t?.title ?? 'Không có công việc',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
@@ -646,23 +620,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
               color: _slate800,
             ),
           ),
-          Text(
-            sub,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: _slate400,
+          if (t != null)
+            Text(
+              t.dueDate == null ? 'Không có hạn' : 'Hạn ${fmtDate(t.dueDate!)}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: t.isOverdue ? const Color(0xFFE11D48) : _slate400,
+              ),
             ),
-          ),
           const Spacer(),
-          if (e != null) ...[
+          if (t != null) ...[
             const SizedBox(height: 12),
             GestureDetector(
-              onTap: () => _toast(
-                '${e.title} · ${e.startTime}${e.endTime != null ? ' - ${e.endTime}' : ''}',
-              ),
+              onTap: () =>
+                  _push(TaskDetailScreen(api: widget.api, taskId: t.id)),
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   vertical: 10,
@@ -748,7 +722,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       a.name,
       _slate700,
-      () => _toast('Mở ứng dụng: ${a.name}'),
+      () => a.id == 'cong-viec'
+          ? _openTasks()
+          : _toast('Mở ứng dụng: ${a.name}'),
     );
   }
 
@@ -765,9 +741,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   );
 
   Widget _bottomNav() {
-    Widget tab(IconData icon, String label, bool active) => GestureDetector(
+    Widget tab(
+      IconData icon,
+      String label,
+      bool active, {
+      VoidCallback? onTap,
+    }) => GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: active ? null : () => _toast('Tính năng đang phát triển'),
+      onTap: active
+          ? null
+          : (onTap ?? () => _toast('Tính năng đang phát triển')),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -805,7 +788,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               tab(Icons.home, 'Trang chủ', true),
               tab(Icons.badge_outlined, 'Hồ sơ', false),
-              tab(Icons.check_box_outlined, 'Công việc', false),
+              tab(
+                Icons.check_box_outlined,
+                'Công việc',
+                false,
+                onTap: _openTasks,
+              ),
             ],
           ),
         ),
