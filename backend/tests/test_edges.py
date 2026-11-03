@@ -43,6 +43,21 @@ def test_cors_origin_not_allowed():
     assert "access-control-allow-origin" not in r.headers
 
 
+@pytest.mark.parametrize("method,path", [
+    ("PUT", "/api/approval-types/x/steps"),
+    ("PATCH", "/api/tasks/1"),
+    ("DELETE", "/api/tasks/1"),
+])
+def test_cors_allows_write_methods(method, path):
+    r = client.options(
+        path,
+        headers={"Origin": "http://localhost:5173", "Access-Control-Request-Method": method},
+    )
+    assert r.status_code == 200
+    assert r.headers["access-control-allow-origin"] == "http://localhost:5173"
+    assert method in r.headers["access-control-allow-methods"]
+
+
 def test_cors_env_parsing(monkeypatch):
     import app.main as m
     monkeypatch.setenv("CORS_ORIGINS", " http://a.com , ,http://b.com")

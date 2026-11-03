@@ -1,0 +1,10 @@
+// Màn chỉ import repo từ đây; mỗi đợt thêm export của module mình.
+export { createMemoryRepo, RepoError } from './repository'
+export type { Entity, ListQuery, Repository } from './repository'
+export * from './crm'
+export * from './sales'
+export * from './purchase'
+export * from './inventory'
+export * from './hr'
+export * from './accounting'
+export * from './settings'
