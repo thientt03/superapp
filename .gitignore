@@ -1,1 +1,7 @@
 .bangiao/
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+.claude/
+node_modules/
