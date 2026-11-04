@@ -6,7 +6,7 @@ export interface Department extends Entity { name: string; parent: string; branc
 export interface Position extends Entity { name: string; department: string; level: string; status: string }
 
 const branches: Branch[] = [
-  { id: '1', code: 'HCM-HQ', name: 'Trụ Sở Chính TP.HCM & Kho Tổng', address: 'Tòa nhà Nexus Tower, Quận 1, TP.HCM', manager: '' },
+  { id: '1', code: 'HCM-HQ', name: 'Trụ Sở Chính TP.HCM & Kho Tổng', address: 'Tòa nhà NgayDem Tower, Quận 1, TP.HCM', manager: '' },
   { id: '2', code: 'HCM-TD', name: 'Chi Nhánh Thủ Đức & Kho Cơ Khí', address: 'Khu Công Nghệ Phường Linh Trung, Thủ Đức', manager: 'NV-0008' },
   { id: '3', code: 'HN-BD', name: 'Chi Nhánh Miền Bắc (Hà Nội)', address: 'Phố Duy Tân, Quận Cầu Giấy, Hà Nội', manager: '' },
 ]

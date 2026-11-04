@@ -198,13 +198,13 @@ export const cancelApproval = (id: number) => request<ApprovalRequest>(`/api/app
 
 export const checkIn = () => request<Attendance>('/api/attendance/check-in', { method: 'POST' })
 
-export async function login(username: string, password: string): Promise<void> {
+export async function login(username: string, password: string, remember = false): Promise<void> {
   const r = await request<{ access_token: string }>('/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password }),
   })
-  setToken(r.access_token)
+  setToken(r.access_token, remember)
 }
 
 export async function logout(): Promise<void> {

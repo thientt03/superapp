@@ -23,7 +23,7 @@ const roles: Role[] = [
   { id: '5', code: 'ROLE-ACCOUNTANT', name: 'Kế Toán Trưởng & Thu Ngân', scope: 'Quản lý thu chi quỹ, công nợ AR/AP và phát hành hóa đơn VAT điện tử.' },
 ]
 const company: Company[] = [
-  { id: '1', code: 'CTY-0001', name: 'CÔNG TY CỔ PHẦN TẬP ĐOÀN NEXUS ENTERPRISE VIỆT NAM', tax_code: '0315892341', legal_rep: 'Trần Hoàng Minh', phone: '028 3822 9999', address: 'Tòa nhà Nexus Tower, Số 38 Đ. Lê Duẩn, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
+  { id: '1', code: 'CTY-0001', name: 'CÔNG TY CỔ PHẦN TẬP ĐOÀN NGAYDEM ENTERPRISE VIỆT NAM', tax_code: '0315892341', legal_rep: 'Trần Hoàng Minh', phone: '028 3822 9999', address: 'Tòa nhà NgayDem Tower, Số 38 Đ. Lê Duẩn, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
 ]
 
 const userBase = createMemoryRepo(users, { codePrefix: 'NV', searchFields: ['code', 'full_name', 'username'] })

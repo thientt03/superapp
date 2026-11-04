@@ -37,7 +37,7 @@ const IDLE = 'hover:bg-slate-800 hover:text-white text-slate-300'
         <div class="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-brand-500/30">
           <i class="fa-solid fa-cubes"></i>
         </div>
-        <span class="font-bold text-lg text-white tracking-wide">Nexus<span class="text-brand-500">ERP</span></span>
+        <span class="font-bold text-lg text-white tracking-wide">NgayDem<span class="text-brand-500">ERP</span></span>
       </div>
       <button type="button" aria-label="Đóng menu" class="md:hidden text-slate-400 hover:text-white" @click="emit('close')">
         <i class="fa-solid fa-xmark text-xl"></i>

@@ -9,10 +9,11 @@ beforeEach(() => clearToken())
 afterEach(() => {
   vi.unstubAllGlobals()
   sessionStorage.clear()
+  localStorage.clear()
 })
 
-async function mountApp() {
-  router.push('/dashboard')
+async function mountApp(start = '/dashboard') {
+  await router.push(start)
   await router.isReady()
   const w = mount(App, { global: { plugins: [router] } })
   await flushPromises()
@@ -24,6 +25,8 @@ describe('App', () => {
     const w = await mountApp()
     expect(w.find('#username').exists()).toBe(true)
     expect(w.find('aside').exists()).toBe(false)
+    expect(router.currentRoute.value.path).toBe('/login')
+    expect(router.currentRoute.value.query.redirect).toBe('/dashboard')
   })
 
   it('có token thì sidebar đủ mục cấp 1 và 46 mục con', async () => {
@@ -45,5 +48,24 @@ describe('App', () => {
     await mountApp()
     expect(token.value).toBeNull()
     expect(authNotice.value).toBe('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại')
+    expect(router.currentRoute.value.path).toBe('/login')
+    expect(router.currentRoute.value.query.redirect).toBeDefined()
+  })
+
+  it('có token mà vào /login?redirect=/tasks thì về /tasks', async () => {
+    setToken('t')
+    mockFetch((u) => (u.includes('/api/dashboard') ? res(200, dash()) : res(200, { items: [], next_cursor: null })))
+    await mountApp('/login?redirect=/tasks')
+    expect(router.currentRoute.value.fullPath).toBe('/tasks')
+  })
+
+  it('clearToken không notice thì về /login không query', async () => {
+    setToken('t')
+    mockFetch((u) => (u.includes('/api/dashboard') ? res(200, dash()) : res(200, { items: [], next_cursor: null })))
+    await mountApp('/dashboard')
+    clearToken()
+    await flushPromises()
+    expect(router.currentRoute.value.path).toBe('/login')
+    expect(router.currentRoute.value.query).toEqual({})
   })
 })

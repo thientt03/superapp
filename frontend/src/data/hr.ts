@@ -43,10 +43,10 @@ export function leaveDays(start: string, end: string): number {
 }
 
 const employees: Employee[] = [
-  { id: '1', code: 'NV-0012', base_salary: 22_000_000, leave_days: 12, full_name: 'Lê Văn Tùng', department: 'PB-0001', position: 'VT-0001', phone: '0903.111.222', email: 'tung.lv@nexus.vn', start_date: '2023-03-01', status: 'active' },
-  { id: '2', code: 'NV-0015', base_salary: 15_000_000, leave_days: 12, full_name: 'Trần Thị Hoa', department: 'PB-0001', position: 'VT-0002', phone: '0903.333.444', email: 'hoa.tt@nexus.vn', start_date: '2024-01-15', status: 'active' },
-  { id: '3', code: 'NV-0008', base_salary: 25_000_000, leave_days: 10, full_name: 'Nguyễn Văn An', department: 'PB-0002', position: 'VT-0004', phone: '0903.555.666', email: 'an.nv@nexus.vn', start_date: '2021-06-01', status: 'active' },
-  { id: '4', code: 'NV-0021', base_salary: 12_000_000, leave_days: 6, full_name: 'Lê Thị Mai', department: 'PB-0001', position: 'VT-0003', phone: '0903.777.888', email: 'mai.lt@nexus.vn', start_date: '2024-08-01', status: 'leave' },
+  { id: '1', code: 'NV-0012', base_salary: 22_000_000, leave_days: 12, full_name: 'Lê Văn Tùng', department: 'PB-0001', position: 'VT-0001', phone: '0903.111.222', email: 'tung.lv@ngaydem.vn', start_date: '2023-03-01', status: 'active' },
+  { id: '2', code: 'NV-0015', base_salary: 15_000_000, leave_days: 12, full_name: 'Trần Thị Hoa', department: 'PB-0001', position: 'VT-0002', phone: '0903.333.444', email: 'hoa.tt@ngaydem.vn', start_date: '2024-01-15', status: 'active' },
+  { id: '3', code: 'NV-0008', base_salary: 25_000_000, leave_days: 10, full_name: 'Nguyễn Văn An', department: 'PB-0002', position: 'VT-0004', phone: '0903.555.666', email: 'an.nv@ngaydem.vn', start_date: '2021-06-01', status: 'active' },
+  { id: '4', code: 'NV-0021', base_salary: 12_000_000, leave_days: 6, full_name: 'Lê Thị Mai', department: 'PB-0001', position: 'VT-0003', phone: '0903.777.888', email: 'mai.lt@ngaydem.vn', start_date: '2024-08-01', status: 'leave' },
 ]
 const attendance: Attendance[] = [
   { id: '1', code: 'CC-0001', emp_code: 'NV-0012', full_name: 'Lê Văn Tùng', date: '2026-11-02', channel: 'fingerprint', check_in: '07:52:14', check_out: '', device: 'Máy Cửa Chính Tầng 1 (IP: 192.168.1.102)' },
@@ -66,7 +66,7 @@ const formulas: Formula[] = [
 const payroll: PayrollRow[] = [{ id: '1', code: 'BL-202610-NV-0012', emp_code: 'NV-0012', month: '2026-10', full_name: 'Lê Văn Tùng', base: 22_000_000, bonus: 14_200_000 }]
 const campaigns: Campaign[] = [
   { id: '1', code: 'TD-0001', kind: 'job', tag: 'Đang Tuyển (3 Vị trí)', title: 'Tuyển 02 Senior Sales B2B (Ngành Thép/Vật tư)', desc: 'Mức lương: 15 - 25 Triệu + % Hoa hồng doanh số cao.' },
-  { id: '2', code: 'TD-0002', kind: 'training', tag: 'Khóa Đào Tạo Nội Bộ', title: 'Đào Tạo Quy Trình ERP Nexus 2026', desc: 'Thời gian: Thứ 7 tuần này (Phòng đào tạo tầng 4).' },
+  { id: '2', code: 'TD-0002', kind: 'training', tag: 'Khóa Đào Tạo Nội Bộ', title: 'Đào Tạo Quy Trình ERP NgayDem 2026', desc: 'Thời gian: Thứ 7 tuần này (Phòng đào tạo tầng 4).' },
 ]
 const kpis: KpiCardItem[] = [
   { id: '1', code: 'KPI-0001', tag: 'Tỉ Lệ Đạt KPI Khối Sales', title: '104.5% Chỉ Tiêu Doanh Số', desc: 'Xuất sắc vượt mốc doanh số Q4 trước hạn.' },
